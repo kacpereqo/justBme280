@@ -3,27 +3,43 @@
 #include "utils/i2c.hpp"
 #include "bme280.hpp"
 
+static BME280 bme280;
+
 void setup()
 {
   Wire.begin();
   Serial.begin(9600);
   while (!Serial)
     ;
-}
 
-// 4.2.3 Compensation formula in 64 bit arithmetic
+  if (bme280.begin())
+  {
+    Serial.println("BME280 is ready");
+  }
+
+  // BME280::Config config;
+
+  // Serial.println(config.addr);
+  // config.temperature_oversampling = BME280::Oversampling::OVERSAMPLING_SKIP;
+  // config.pressure_oversampling = BME280::Oversampling::OVERSAMPLING_SKIP;
+
+  // bme280.setConfig(config);
+}
 
 void loop()
 {
-  // burst read raw data from the sensor 0xF7 - 0xFE
-  // analog / digital converter raw values
-
-  static BME280 bme280;
 
   bme280.update();
 
   Serial.print(bme280.getPressure());
-  Serial.println(" hPa");
+  Serial.print(" hPa");
+  Serial.print(" ");
+  Serial.print(bme280.getTemperature());
+  Serial.print(" *C");
+  Serial.print(" ");
+  Serial.print(bme280.getHumidity());
+  Serial.print(" %");
+  Serial.println();
 
   delay(1000.0f / 1.0f);
 }
