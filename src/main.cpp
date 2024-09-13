@@ -12,18 +12,18 @@ void setup()
   while (!Serial)
     ;
 
+  BME280::Config config;
+
+  config.temperature_oversampling = BME280::Oversampling::OVERSAMPLING_SKIP;
+  config.pressure_oversampling = BME280::Oversampling::OVERSAMPLING_1;
+  config.humidity_oversampling = BME280::Oversampling::OVERSAMPLING_SKIP;
+
+  bme280.setConfig(config);
+
   if (bme280.begin())
   {
     Serial.println("BME280 is ready");
   }
-
-  // BME280::Config config;
-
-  // Serial.println(config.addr);
-  // config.temperature_oversampling = BME280::Oversampling::OVERSAMPLING_SKIP;
-  // config.pressure_oversampling = BME280::Oversampling::OVERSAMPLING_SKIP;
-
-  // bme280.setConfig(config);
 }
 
 void loop()

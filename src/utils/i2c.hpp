@@ -24,6 +24,5 @@ T I2C::readRegister(byte addr, byte reg)
     for (int i = 0; i < sizeof(T); i++)
         if (Wire.available())
             data[i] = Wire.read();
-
     return *reinterpret_cast<T *>(data);
 }
