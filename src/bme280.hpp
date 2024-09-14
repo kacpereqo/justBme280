@@ -68,6 +68,7 @@ public:
 
     void setConfig(Config config);
     void update();
+    void reset();
 
     template <typename T>
     T readRegister(byte reg);
@@ -81,6 +82,8 @@ public:
     float getTemperature();
     float getPressure();
     float getHumidity();
+
+    float getMesurementTime();
 
     Config config;
 

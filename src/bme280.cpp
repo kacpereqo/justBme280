@@ -28,6 +28,11 @@ void BME280::update()
     this->adc_H = (readData.humidity[0] << 8) | readData.humidity[1];
 }
 
+void BME280::reset()
+{
+    this->writeRegister(BME280_RST_REG, BME280_RST_REG);
+}
+
 template <typename T>
 T BME280::readRegister(byte reg)
 {
@@ -120,6 +125,21 @@ float BME280::getHumidity()
 {
     constexpr float divide_factor = 1024.0f;
     return getHumidityRaw(this->adc_H) / divide_factor;
+}
+
+float BME280::getMesurementTime()
+{
+    float time = 1.25f;
+
+    uint8_t osrs_t = static_cast<uint8_t>(this->config.temperature_oversampling);
+    uint8_t osrs_p = static_cast<uint8_t>(this->config.pressure_oversampling);
+    uint8_t osrs_h = static_cast<uint8_t>(this->config.humidity_oversampling);
+
+    float t_conv = osrs_t != 0 ? 0.0f : 2.3f * osrs_t;
+    float p_conv = osrs_p != 0 ? 0.0f : 2.3f * osrs_p + 0.575f;
+    float h_conv = osrs_h != 0 ? 0.0f : 2.3f * osrs_h + 0.575f;
+
+    return time + t_conv + p_conv + h_conv;
 }
 
 void BME280::readCalibraionData()
