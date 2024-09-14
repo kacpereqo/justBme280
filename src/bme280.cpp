@@ -1,4 +1,5 @@
 #include "bme280.hpp"
+#include "utils/i2c.hpp"
 
 bool BME280::begin()
 {
@@ -20,11 +21,22 @@ bool BME280::begin()
 
 void BME280::update()
 {
-    rawData readData = I2C::readRegister<rawData>(this->config.addr, BME280_PRESSURE_MSB_REG);
+    rawData readData = this->readRegister<rawData>(BME280_PRESSURE_MSB_REG);
 
     this->adc_T = (readData.temperature[0] << 12) | (readData.temperature[1] << 4) | (readData.temperature[2] >> 4);
     this->adc_P = (readData.pressure[0] << 12) | (readData.pressure[1] << 4) | (readData.pressure[2] >> 4);
     this->adc_H = (readData.humidity[0] << 8) | readData.humidity[1];
+}
+
+template <typename T>
+T BME280::readRegister(byte reg)
+{
+    return I2C::readRegister<T>(this->config.addr, reg);
+}
+
+void BME280::writeRegister(byte reg, byte val)
+{
+    I2C::writeRegister(this->config.addr, reg, val);
 }
 
 void BME280::setConfig(Config config)
@@ -112,26 +124,27 @@ float BME280::getHumidity()
 
 void BME280::readCalibraionData()
 {
-    this->dig_T1 = I2C::readRegister<uint16_t>(this->config.addr, BME280_DIG_T1_LSB_REG);
-    this->dig_T2 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_T2_LSB_REG);
-    this->dig_T3 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_T3_LSB_REG);
 
-    this->dig_P1 = I2C::readRegister<uint16_t>(this->config.addr, BME280_DIG_P1_LSB_REG);
-    this->dig_P2 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P2_LSB_REG);
-    this->dig_P3 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P3_LSB_REG);
-    this->dig_P4 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P4_LSB_REG);
-    this->dig_P5 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P5_LSB_REG);
-    this->dig_P6 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P6_LSB_REG);
-    this->dig_P7 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P7_LSB_REG);
-    this->dig_P8 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P8_LSB_REG);
-    this->dig_P9 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_P9_LSB_REG);
+    this->dig_T1 = this->readRegister<uint16_t>(BME280_DIG_T1_LSB_REG);
+    this->dig_T2 = this->readRegister<int16_t>(BME280_DIG_T2_LSB_REG);
+    this->dig_T3 = this->readRegister<int16_t>(BME280_DIG_T3_LSB_REG);
 
-    this->dig_H1 = I2C::readRegister<uint8_t>(this->config.addr, BME280_DIG_H1_REG);
-    this->dig_H2 = I2C::readRegister<int16_t>(this->config.addr, BME280_DIG_H2_LSB_REG);
-    this->dig_H3 = I2C::readRegister<uint8_t>(this->config.addr, BME280_DIG_H3_REG);
-    this->dig_H4 = (I2C::readRegister<int8_t>(this->config.addr, BME280_DIG_H4_MSB_REG) << 4) | (I2C::readRegister<int8_t>(this->config.addr, BME280_DIG_H4_LSB_REG) & 0x0F);
-    this->dig_H5 = (I2C::readRegister<int8_t>(this->config.addr, BME280_DIG_H5_MSB_REG) << 4) | (I2C::readRegister<int8_t>(this->config.addr, BME280_DIG_H5_MSB_REG) >> 4);
-    this->dig_H6 = I2C::readRegister<int8_t>(this->config.addr, BME280_DIG_H6_REG);
+    this->dig_P1 = this->readRegister<uint16_t>(BME280_DIG_P1_LSB_REG);
+    this->dig_P2 = this->readRegister<int16_t>(BME280_DIG_P2_LSB_REG);
+    this->dig_P3 = this->readRegister<int16_t>(BME280_DIG_P3_LSB_REG);
+    this->dig_P4 = this->readRegister<int16_t>(BME280_DIG_P4_LSB_REG);
+    this->dig_P5 = this->readRegister<int16_t>(BME280_DIG_P5_LSB_REG);
+    this->dig_P6 = this->readRegister<int16_t>(BME280_DIG_P6_LSB_REG);
+    this->dig_P7 = this->readRegister<int16_t>(BME280_DIG_P7_LSB_REG);
+    this->dig_P8 = this->readRegister<int16_t>(BME280_DIG_P8_LSB_REG);
+    this->dig_P9 = this->readRegister<int16_t>(BME280_DIG_P9_LSB_REG);
+
+    this->dig_H1 = this->readRegister<uint8_t>(BME280_DIG_H1_REG);
+    this->dig_H2 = this->readRegister<int16_t>(BME280_DIG_H2_LSB_REG);
+    this->dig_H3 = this->readRegister<uint8_t>(BME280_DIG_H3_REG);
+    this->dig_H4 = (this->readRegister<int8_t>(BME280_DIG_H4_MSB_REG) << 4) | (this->readRegister<int8_t>(BME280_DIG_H4_LSB_REG) & 0x0F);
+    this->dig_H5 = (this->readRegister<int8_t>(BME280_DIG_H5_MSB_REG) << 4) | (this->readRegister<int8_t>(BME280_DIG_H5_MSB_REG) >> 4);
+    this->dig_H6 = this->readRegister<int8_t>(BME280_DIG_H6_REG);
 }
 
 void BME280::writeConfig()
@@ -146,12 +159,12 @@ void BME280::writeConfig()
                   static_cast<byte>(this->config.filter) << 2 |
                   static_cast<byte>(this->config.spi_3);
 
-    I2C::writeRegister(this->config.addr, BME280_CONFIG_REG, config);
-    I2C::writeRegister(this->config.addr, BME280_CTRL_HUMIDITY_REG, ctrl_hum);
-    I2C::writeRegister(this->config.addr, BME280_CTRL_MEAS_REG, ctrl_meas);
+    this->writeRegister(BME280_CONFIG_REG, config);
+    this->writeRegister(BME280_CTRL_HUMIDITY_REG, ctrl_hum);
+    this->writeRegister(BME280_CTRL_MEAS_REG, ctrl_meas);
 }
 
 byte BME280::getChipId()
 {
-    return I2C::readRegister<byte>(this->config.addr, BME280_CHIP_ID_REG);
+    return this->readRegister<byte>(BME280_CHIP_ID_REG);
 }

@@ -69,6 +69,10 @@ public:
     void setConfig(Config config);
     void update();
 
+    template <typename T>
+    T readRegister(byte reg);
+    void writeRegister(byte reg, byte val);
+
     // 4.2.3 Compensation formulas
     int32_t getTemperatureRaw(int32_t adc_T);
     int32_t getPressureRaw(int32_t adc_P);
