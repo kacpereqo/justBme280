@@ -2,15 +2,23 @@
 #include "registers.hpp"
 #include "utils/i2c.hpp"
 #include "bme280.hpp"
+#include "utils/spi.hpp"
 
 static BME280 bme280;
 
 void setup()
 {
-  Wire.begin();
   Serial.begin(9600);
   while (!Serial)
     ;
+
+  BME280Config::Config config;
+  config.temperature_oversampling = BME280Config::Oversampling::oversampling_x1;
+  config.pressure_oversampling = BME280Config::Oversampling::oversampling_x1;
+  config.humidity_oversampling = BME280Config::Oversampling::oversampling_x1;
+  config.filter = BME280Config::Filter::filter_off;
+  config.communication = BME280Config::Communication::spi;
+  bme280.setConfig(config);
 
   if (bme280.begin())
   {
@@ -29,6 +37,4 @@ void loop()
   Serial.print(bme280.getHumidity());
   Serial.print(" % ");
   Serial.println();
-
-  // delay(1000.0f / 1.0f);
 }

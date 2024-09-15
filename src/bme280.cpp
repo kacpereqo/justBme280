@@ -1,24 +1,51 @@
 #include "bme280.hpp"
 #include "utils/i2c.hpp"
+#include "utils/spi.hpp"
 
-bool BME280::begin()
+/*
+ * @brief Initialize the BME280
+ * @return bool true if the BME280 is initialized
+ */
+bool checkChipId(byte chipId)
 {
-    Wire.begin();
-
-    byte chipId = this->getChipId();
 
     constexpr byte BME280_CHIP_ID = 0x60;
     constexpr byte BMP_280_CHIP_ID = 0x58;
 
     if (chipId != BME280_CHIP_ID && chipId != BMP_280_CHIP_ID)
         return false;
+    return true;
+}
 
-    this->writeConfig();
-    this->readCalibraionData();
+bool BME280::begin()
+{
+
+    if (this->config.communication == BME280Config::Communication::i2c)
+        Wire.begin();
+    if (this->config.communication == BME280Config::Communication::spi)
+    {
+        SPI.begin();
+
+        pinMode(this->config.cs_pin, OUTPUT);
+        digitalWrite(this->config.cs_pin, HIGH);
+    }
+
+    if (!checkChipId(this->getChipId()))
+        return false;
+    else
+    {
+        this->writeConfig();
+        this->readCalibraionData();
+    }
+
+    this->initialized = true;
 
     return true;
 }
 
+/*
+ * @brief Get the raw data from the BME280
+ */
 void BME280::update()
 {
     rawData readData = this->readRegister<rawData>(BME280_PRESSURE_MSB_REG);
@@ -28,28 +55,58 @@ void BME280::update()
     this->adc_H = (readData.humidity[0] << 8) | readData.humidity[1];
 }
 
+/*
+ * @brief Soft reset the BME280
+ */
 void BME280::reset()
 {
-    this->writeRegister(BME280_RST_REG, BME280_RST_REG);
+    this->writeRegister(BME280_RST_REG, 0);
 }
 
+/*
+ * @brief Read a byte from register of the BME280
+ * @param reg register to read
+ * @return T value read from register
+ */
 template <typename T>
 T BME280::readRegister(byte reg)
 {
-    return I2C::readRegister<T>(this->config.addr, reg);
+    if (this->config.communication == BME280Config::Communication::i2c)
+        return I2C::readRegister<T>(this->config.addr, reg);
+    else
+        return JustSPI::readRegister<T>(this->config.cs_pin, reg);
 }
 
+/*
+    * @brief Write a byte into register of the BME280
+    * @param reg register to write
+    * @param val value to write
+
+*/
 void BME280::writeRegister(byte reg, byte val)
 {
-    I2C::writeRegister(this->config.addr, reg, val);
+    if (this->config.communication == BME280Config::Communication::i2c)
+        I2C::writeRegister(this->config.addr, reg, val);
+    else
+        JustSPI::writeRegister(this->config.cs_pin, reg, val);
 }
 
-void BME280::setConfig(Config config)
+/*
+ * @brief Set the configuration of the BME280
+ * @param config configuration of the BME280
+ */
+void BME280::setConfig(BME280Config::Config config)
 {
     this->config = config;
-    this->writeConfig();
+    if (this->initialized)
+        this->writeConfig();
 }
 
+/*
+ * @brief Get the temperature raw data
+ * @param adc_T temperature raw data from adc
+ * @return uint32_t temperature raw data
+ */
 int32_t BME280::getTemperatureRaw(int32_t adc_T)
 {
 
@@ -64,6 +121,11 @@ int32_t BME280::getTemperatureRaw(int32_t adc_T)
     return T;
 }
 
+/*
+ * @brief Get the pressure raw data
+ * @param adc_P pressure raw data from adc
+ * @return uint32_t pressure raw data
+ */
 int32_t BME280::getPressureRaw(int32_t adc_P)
 {
 
@@ -86,6 +148,11 @@ int32_t BME280::getPressureRaw(int32_t adc_P)
     return (int64_t)p;
 }
 
+/*
+ * @brief Get the humidity raw data
+ * @param adc_H humidity raw data from adc
+ * @return uint32_t humidity raw data
+ */
 uint32_t BME280::getHumidityRaw(int32_t adc_H)
 {
     int32_t var1;
@@ -109,24 +176,40 @@ uint32_t BME280::getHumidityRaw(int32_t adc_H)
     return ((uint32_t)(var1 >> 12));
 }
 
+/*
+ * @brief Get the temperature in Celsius
+ * @return float temperature in Celsius
+ */
 float BME280::getTemperature()
 {
     constexpr float divide_factor = 100.0f;
     return getTemperatureRaw(this->adc_T) / divide_factor;
 }
 
+/*
+ * @brief Get the pressure in hPa
+ * @return float pressure in hPa
+ */
 float BME280::getPressure()
 {
     constexpr float divide_factor = 256.0f * 100.0f;
     return getPressureRaw(this->adc_P) / divide_factor;
 }
 
+/*
+ * @brief Get the humidity in %
+ * @return float humidity in %
+ */
 float BME280::getHumidity()
 {
     constexpr float divide_factor = 1024.0f;
     return getHumidityRaw(this->adc_H) / divide_factor;
 }
 
+/*
+ * @brief Get the time in ms for a single measurement
+ * @return float time in ms
+ */
 float BME280::getMesurementTime()
 {
     float time = 1.25f;
@@ -142,6 +225,9 @@ float BME280::getMesurementTime()
     return time + t_conv + p_conv + h_conv;
 }
 
+/*
+ * @brief Read the calibration data from the BME280
+ */
 void BME280::readCalibraionData()
 {
 
@@ -167,6 +253,9 @@ void BME280::readCalibraionData()
     this->dig_H6 = this->readRegister<int8_t>(BME280_DIG_H6_REG);
 }
 
+/*
+ * @brief Write the configuration into register of the BME280
+ */
 void BME280::writeConfig()
 {
     byte ctrl_meas = static_cast<byte>(this->config.temperature_oversampling) << 5 |
@@ -177,13 +266,17 @@ void BME280::writeConfig()
 
     byte config = static_cast<byte>(this->config.standby) << 5 |
                   static_cast<byte>(this->config.filter) << 2 |
-                  static_cast<byte>(this->config.spi_3);
+                  this->config.communication == BME280Config::Communication::spi_3wire;
 
     this->writeRegister(BME280_CONFIG_REG, config);
     this->writeRegister(BME280_CTRL_HUMIDITY_REG, ctrl_hum);
     this->writeRegister(BME280_CTRL_MEAS_REG, ctrl_meas);
 }
 
+/*
+ * @brief Get the chip id of the BME280
+ * @return uint8_t chip id
+ */
 byte BME280::getChipId()
 {
     return this->readRegister<byte>(BME280_CHIP_ID_REG);
