@@ -2,7 +2,7 @@
 
 #include <Wire.h>
 
-struct I2C
+struct JustI2C
 {
 public:
     static void writeRegister(byte addr, byte reg, byte value);
@@ -12,7 +12,7 @@ public:
 };
 
 template <typename T>
-T I2C::readRegister(byte addr, byte reg)
+T JustI2C::readRegister(byte addr, byte reg)
 {
     Wire.beginTransmission(addr);
     Wire.write(reg);

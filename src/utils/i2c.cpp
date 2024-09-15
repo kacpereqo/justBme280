@@ -1,6 +1,6 @@
 #include "i2c.hpp"
 
-void I2C::writeRegister(byte addr, byte reg, byte value)
+void JustI2C::writeRegister(byte addr, byte reg, byte value)
 {
     Wire.beginTransmission(addr);
     Wire.write(reg);

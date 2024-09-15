@@ -86,7 +86,7 @@ T BME280::readRegister(byte reg)
 void BME280::writeRegister(byte reg, byte val)
 {
     if (this->config.communication == BME280Config::Communication::i2c)
-        I2C::writeRegister(this->config.addr, reg, val);
+        JustI2C::writeRegister(this->config.addr, reg, val);
     else
         JustSPI::writeRegister(this->config.cs_pin, reg, val);
 }
