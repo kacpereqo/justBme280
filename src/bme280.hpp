@@ -6,6 +6,9 @@
 #include "registers.hpp"
 #include "bme280config.hpp"
 
+/*!
+ * @brief BME280 sensor class, provides methods to read temperature, pressure and humidity. to initialize the sensor, call begin() method.
+ */
 struct BME280
 {
 public:
@@ -15,14 +18,7 @@ public:
     void update();
     void reset();
 
-    template <typename T>
-    T readRegister(byte reg);
-    void writeRegister(byte reg, byte val);
-
     // 4.2.3 Compensation formulas
-    int32_t getTemperatureRaw(int32_t adc_T);
-    int32_t getPressureRaw(int32_t adc_P);
-    uint32_t getHumidityRaw(int32_t adc_H);
 
     float getTemperature(); // in Celsius
     float getPressure();    // in hPa
@@ -31,6 +27,14 @@ public:
     float getMesurementTime();
 
 private:
+    template <typename T>
+    T readRegister(byte reg);
+    void writeRegister(byte reg, byte val);
+
+    int32_t getTemperatureRaw(int32_t adc_T);
+    int32_t getPressureRaw(int32_t adc_P);
+    uint32_t getHumidityRaw(int32_t adc_H);
+
     struct rawData
     {
         byte pressure[3];
@@ -78,5 +82,9 @@ private:
     void readCalibraionData();
     void writeConfig();
 
+    bool checkChipId(byte chipId);
+
     byte getChipId();
 };
+
+#include "bme280.tpp"
