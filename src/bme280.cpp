@@ -72,7 +72,7 @@ template <typename T>
 T BME280::readRegister(byte reg)
 {
     if (this->config.communication == BME280Config::Communication::i2c)
-        return I2C::readRegister<T>(this->config.addr, reg);
+        return JustI2C::readRegister<T>(this->config.addr, reg);
     else
         return JustSPI::readRegister<T>(this->config.cs_pin, reg);
 }
