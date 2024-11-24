@@ -18,10 +18,10 @@ T JustI2C::readRegister(byte addr, byte reg)
     Wire.endTransmission();
     Wire.requestFrom(addr, sizeof(T));
 
-    byte data[sizeof(T)];
+    T result;
 
     for (int i = 0; i < sizeof(T); i++)
         if (Wire.available())
-            data[i] = Wire.read();
-    return *reinterpret_cast<T *>(data);
+            result |= static_cast<T>(Wire.read() << (8 * i));
+    return result;
 }
